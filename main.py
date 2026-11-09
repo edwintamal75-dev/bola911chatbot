@@ -1,67 +1,70 @@
-import os
 import logging
+import os
+
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 logging.basicConfig(level=logging.INFO)
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-
 if not TOKEN:
     raise RuntimeError("TELEGRAM_BOT_TOKEN belum diset di Railway Variables")
 
 bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
 
-LINK_ALTERNATIF = "https://cutt.ly/CtjAfsCD"
-LIVE_CHAT = "https://direct.lc.chat/15271713/"
-DAFTAR_SEKARANG = LINK_ALTERNATIF
-HUBUNGI_CS = LIVE_CHAT
+LINK_RESMI = "https://cutt.ly/CtjAfsCD"
+LIVE_CHAT = "https://text.at/62b10376-5f3c-4b00-a4b1-f8d89da4af2e"
+BANNER_PATH = os.path.join("assets", "bola911-banner.jpg")
 
-
-WELCOME_TEXT = """BOLA911 OFFICIAL
+WELCOME_TEXT = """<b>BOLA911 OFFICIAL</b>
 
 Selamat datang di Bola911!
 
-Transaksi deposit QRIS proses hanya 1 detik
-Penarikan berapapun dibayar lunas tanpa ribet
-Sistem cepat, stabil dan pelayanan terbaik 24 jam
+Transaksi deposit QRIS diproses hanya 1 detik.
+Penarikan dibayar tuntas tanpa ribet.
+Sistem cepat, stabil, dan pelayanan tersedia 24 jam.
 
-Link Alternatif: https://cutt.ly/CtjAfsCD
-Live Chat 24 Jam: https://direct.lc.chat/15271713/
-
-Bergabunglah sekarang dan rasakan pengalaman terbaik
-bersama BOLA911!"""
+Bergabunglah sekarang dan rasakan pengalaman terbaik bersama BOLA911!"""
 
 
 def menu_buttons():
-    markup = InlineKeyboardMarkup(row_width=2)
+    markup = InlineKeyboardMarkup(row_width=1)
     markup.add(
-        InlineKeyboardButton("Link Alternatif", url=LINK_ALTERNATIF),
-        InlineKeyboardButton("Live Chat 24 Jam", url=LIVE_CHAT),
-        InlineKeyboardButton("Daftar Sekarang", url=DAFTAR_SEKARANG),
-        InlineKeyboardButton("Hubungi CS", url=HUBUNGI_CS),
+        InlineKeyboardButton("🌐 LINK RESMI BOLA911", url=LINK_RESMI),
+        InlineKeyboardButton("💬 LIVE CHAT 24 JAM", url=LIVE_CHAT),
     )
     return markup
 
 
+def send_welcome(chat_id):
+    buttons = menu_buttons()
+
+    if os.path.isfile(BANNER_PATH):
+        with open(BANNER_PATH, "rb") as banner:
+            bot.send_photo(
+                chat_id,
+                banner,
+                caption=WELCOME_TEXT,
+                reply_markup=buttons,
+            )
+    else:
+        logging.warning("Banner tidak ditemukan: %s", BANNER_PATH)
+        bot.send_message(
+            chat_id,
+            WELCOME_TEXT,
+            reply_markup=buttons,
+            disable_web_page_preview=True,
+        )
+
+
 @bot.message_handler(commands=["start"])
 def start(message):
-    bot.send_message(
-        message.chat.id,
-        WELCOME_TEXT,
-        reply_markup=menu_buttons(),
-        disable_web_page_preview=True,
-    )
+    send_welcome(message.chat.id)
 
 
 @bot.message_handler(func=lambda message: True)
 def reply_all(message):
-    bot.send_message(
-        message.chat.id,
-        WELCOME_TEXT,
-        reply_markup=menu_buttons(),
-        disable_web_page_preview=True,
-    )
+    send_welcome(message.chat.id)
 
 
 if __name__ == "__main__":
